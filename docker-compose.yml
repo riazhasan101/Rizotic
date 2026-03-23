@@ -1,7 +1,0 @@
-# No database, no backend — just static frontend served by nginx
-services:
-  frontend:
-    build: ./frontend
-    restart: always
-    ports:
-      - "80:80"
