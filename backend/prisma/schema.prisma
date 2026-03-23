@@ -1,0 +1,68 @@
+// prisma/schema.prisma
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ContactSubmission {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  company   String?
+  phone     String?
+  service   String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([read])
+}
+
+model Service {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  name        String
+  icon        String   // FontAwesome class name e.g. "fa-brain"
+  colorClass  String   // Tailwind gradient class
+  accentColor String   // Hex e.g. "#ff6b35"
+  description String
+  features    Json     // String[]
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Industry {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  name        String
+  icon        String
+  description String
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+}
+
+model SiteContent {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique  // e.g. "hero.tagline" | "about.overview"
+  value     String
+  type      String   @default("text")  // text | html | json
+  updatedAt DateTime @updatedAt
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+}

@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: rizotic
+      POSTGRES_PASSWORD: rizotic_pass
+      POSTGRES_DB: rizotic_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U rizotic -d rizotic_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://rizotic:rizotic_pass@postgres:5432/rizotic_db
+    command: sh -c "npx prisma migrate deploy && node prisma/seed.js"
+    restart: "no"
+
+  backend:
+    build: ./backend
+    restart: always
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://rizotic:rizotic_pass@postgres:5432/rizotic_db
+      JWT_SECRET: ${JWT_SECRET:-rizotic_dev_secret}
+      PORT: 3001
+      FRONTEND_URL: http://localhost
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      FROM_EMAIL: ${FROM_EMAIL:-info@rizotic.com}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-info@rizotic.com}
+    ports:
+      - "3001:3001"
+
+  frontend:
+    build: ./frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
